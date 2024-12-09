@@ -29,14 +29,13 @@ export async function POST(req: NextRequest, res: NextResponse) {
 
 export async function GET(req: NextRequest, res: NextResponse) {
     const projects = await prisma.project.findMany();
-    console.log(projects);
     return NextResponse.json({data: projects});
 }
 
 export async function PUT(req: NextRequest, res: NextResponse) {
     try {
         const body = await req.json();
-        //console.log('body : ', body);
+        console.log('body : ', body);
         const updatedResource = await prisma.project.update({
             where: { id: body.id },
             data: {

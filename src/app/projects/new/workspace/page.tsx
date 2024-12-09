@@ -22,8 +22,9 @@ interface APINodeData {
 
 export default function Workspace() {
     const searchParams = useSearchParams();
-    const id = Number(searchParams.get('id')); 
-
+    const id = searchParams.get('id');
+    const id_num = Number(id);
+    console.log('id_num :',id_num);
 
     const [selectedNodes, setSelectedNodes] = useState<number[]>([]);
     const [saveElements, setSaveElements] = useState<ElementTree[]>([]);
@@ -89,12 +90,12 @@ export default function Workspace() {
                 const res = await fetch('../../api/project');
                 const projectData = await res.json();
                 
-                console.log('savedNodeIds' ,projectData.data[id - 1].savedNodeIds);
+                console.log('savedNodeIds' ,projectData.data[id_num - 1].savedNodeIds);
 
                 if (projectData.data && Array.isArray(projectData.data)) {
                     // 배열의 첫 번째 요소의 savedNodeIds 사용
-                    if (projectData.data[id-1]?.savedNodeIds) {
-                        const nodeIds = projectData.data[id-1].savedNodeIds
+                    if (projectData.data[id_num-1]?.savedNodeIds) {
+                        const nodeIds = projectData.data[id_num-1].savedNodeIds
                             .split(',')
                             .map(Number);
                         setNodeDataIdx(nodeIds);
@@ -102,7 +103,7 @@ export default function Workspace() {
                     }
                 }                
             } catch (error) {
-                console.error('Error fetching project datareadProjectData:', error);
+                //console.error('Error fetching project datareadProjectData:', error);
             }
         }
         readProjectData();
@@ -322,6 +323,7 @@ export default function Workspace() {
     }
 
     const handleUpdateProject = async ( data: Omit<Project, 'createdAt' | 'title' | 'isSaved' | 'imageSrc'> ) => {
+        console.log('data : ', data);
         const sendData = { ...data };
         const response = (await fetch('../../api/project', {
             method:"PUT",
@@ -424,7 +426,7 @@ export default function Workspace() {
     
     function updateProjectData(nodeIds: number[]) {
         handleUpdateProject({
-            id: id,
+            id: Number(id_num),
             savedNodeIds: String(nodeIds),
             savedElementIds: "",
         });

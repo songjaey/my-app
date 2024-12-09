@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation'
 import { Project } from "@prisma/client";
 import Link from 'next/link'
 
@@ -7,6 +8,13 @@ import Link from 'next/link'
 export default function Start() {
     const [inputTitle, setInputTitle] = useState("");
     const [projectId, setProjectId] = useState<number>(1);
+    const navigation = useRouter();
+
+    const handleContinue = (projectIdt: number) => {
+        const strProjectId = String(projectIdt);
+        console.log(strProjectId);
+        navigation.push(`/projects/new/workspace?id=${strProjectId}`);
+    };
 
     useEffect(() => {
         const readProjectData = async () => {
@@ -26,6 +34,7 @@ export default function Start() {
 
     const handleCreateProject = async ( data: Omit<Project, 'id' | 'createdAt'> ) => {
 
+        console.log('111111111111111111111');
         const sendData = { ...data };
         const response = await (await fetch('../api/project', {
             method: "POST",
@@ -34,10 +43,15 @@ export default function Start() {
                 "Content-Type": "application/json",
             },
         })).json();
-
+        console.log('222222222222222222');
         if(response.errors) {
             console.log(response.errors);
             return;
+        }
+        console.log('3333333333333333333333');
+        if (projectId > 0) {
+            console.log('projectId---->', projectId)
+            handleContinue(projectId);
         }
     }
 
@@ -61,7 +75,7 @@ export default function Start() {
             {/* <button
                 
             >TEST</button> */}
-            <Link
+            <button
                 onClick={() =>
                     handleCreateProject({
                         title: inputTitle,
@@ -71,11 +85,10 @@ export default function Start() {
                         savedElementIds: '',
                     })
                 }
-                href="new/workspace"
                 className="px-10 py-2 my-20 w-1/2 text-center bg-green-500 text-white rounded-md hover:bg-green-600 bg-opacity-50"
             >
                 Start a Project
-            </Link>
+            </button>
         </div>
     );
 }
