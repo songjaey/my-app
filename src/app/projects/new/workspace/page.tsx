@@ -9,16 +9,6 @@ import ElementDialog from '@/app/components/element-dialog';
 import Sidebar from '@/app/components/sidebar';
 import { useSearchParams } from 'next/navigation';
 
-interface WorkspaceProps {
-    projectId?: number;
-}
-interface APINodeData {
-    id: number;
-    name: string;
-    coordinateX: number;
-    coordinateY: number;
-    coordinateZ: number;
-}
 
 export default function Workspace() {
     const searchParams = useSearchParams();
@@ -33,7 +23,6 @@ export default function Workspace() {
     //const [nodeIdsStart, setNodeIdsStart] = useState<number>();
     const mountRef = useRef<HTMLDivElement>(null);
     const [nextId, setNextId] = useState(0);
-    const [nodeId, setNodeId] = useState(0);
     const [enextId, setEnextId] = useState(0);
     const [nodeModalIsOpen, setNodeModalIsOpen] = useState(false);
     const [elementModalIsOpen, setElementModalIsOpen] = useState(false);
@@ -84,69 +73,88 @@ export default function Workspace() {
         };
     }, []);
 
-    useEffect(() => {
-        const readProjectData = async () => {
-            try {
-                const res = await fetch('../../api/project');
-                const projectData = await res.json();
+    // useEffect(() => {
+    //     const readProjectData = async () => {
+    //         try {
+    //             const res = await fetch('../../api/project');
+    //             const projectData = await res.json();
                 
-                console.log('savedNodeIds' ,projectData.data[id_num - 1].savedNodeIds);
+    //             console.log('savedNodeIds' ,projectData.data[id_num - 1].savedNodeIds);
 
-                if (projectData.data && Array.isArray(projectData.data)) {
-                    // 배열의 첫 번째 요소의 savedNodeIds 사용
-                    if (projectData.data[id_num-1]?.savedNodeIds) {
-                        const nodeIds = projectData.data[id_num-1].savedNodeIds
-                            .split(',')
-                            .map(Number);
-                        setNodeDataIdx(nodeIds);
-                        //console.log('SavedNodeIds:', nodeIds);
-                    }
-                }                
-            } catch (error) {
-                //console.error('Error fetching project datareadProjectData:', error);
-            }
-        }
-        readProjectData();
-    }, []);
+    //             if (projectData.data && Array.isArray(projectData.data)) {
+    //                 // 배열의 첫 번째 요소의 savedNodeIds 사용
+    //                 if (projectData.data[id_num-1]?.savedNodeIds) {
+    //                     const nodeIds = projectData.data[id_num-1].savedNodeIds
+    //                         .split(',')
+    //                         .map(Number);
+    //                     setNodeDataIdx(nodeIds);
+    //                     //console.log('SavedNodeIds:', nodeIds);
+    //                 }
+    //             }                
+    //         } catch (error) {
+    //             //console.error('Error fetching project datareadProjectData:', error);
+    //         }
+    //     }
+    //     readProjectData();
+    // }, []);
 
     useEffect(() => {
         const searchData = async () => {
-            console.log('idx', nodeDataIdx);
-            if(nodeDataIdx.length > 0){
-                try {
-                    const res = await fetch('../../api/searchNodes', {
-                        method: 'POST',
-                        body: JSON.stringify({ id: nodeDataIdx }),
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    const nodeDataArray = await res.json();
-                    console.log('nodeDataArray', nodeDataArray);
+            const id_temp = String(id_num);
+            const res = await fetch(`../../api/getProjectNodeIds?id=${id_temp}`);
+            const nodeDataArray = await res.json();
+            if (nodeDataArray.data && Array.isArray(nodeDataArray.data)) {
+                console.log('nodeDataArray', nodeDataArray);
+                setNodes((prev) => ({
+                    trees: [
+                        ...prev.trees,
+                        ...nodeDataArray.data.map((nodeData: NodeTreeData) => ({
+                            nodeId: nodeData.id-1,
+                            nodeName: nodeData.name,
+                            coordinateX: nodeData.coordinateX,
+                            coordinateY: nodeData.coordinateY,
+                            coordinateZ: nodeData.coordinateZ
+                        }))
+                    ]
+                }));
+                console.log('nodes', nodes);
+            }
+            // console.log('idx', nodeDataIdx);
+            // if(nodeDataIdx.length > 0){
+            //     try {
+            //         const res = await fetch('../../api/searchNodes', {
+            //             method: 'POST',
+            //             body: JSON.stringify({ id: nodeDataIdx }),
+            //             headers: {
+            //                 'Content-Type': 'application/json'
+            //             }
+            //         });
+            //         const nodeDataArray = await res.json();
+            //         console.log('nodeDataArray', nodeDataArray);
                     
-                    if (nodeDataArray.data && Array.isArray(nodeDataArray.data)) {
-                        console.log('nodeDataArray', nodeDataArray);
-                        setNodes((prev) => ({
-                            trees: [
-                                ...prev.trees,
-                                ...nodeDataArray.data.map((nodeData: NodeTreeData) => ({
-                                    nodeId: nodeData.id-1,
-                                    nodeName: nodeData.name,
-                                    coordinateX: nodeData.coordinateX,
-                                    coordinateY: nodeData.coordinateY,
-                                    coordinateZ: nodeData.coordinateZ
-                                }))
-                            ]
-                        }));
-                        console.log('nodes', nodes);
-                    }
-                } catch (error) {
-                    console.error('Error in searchNodeDatas:', error);
-                }
-            }         
+            //         if (nodeDataArray.data && Array.isArray(nodeDataArray.data)) {
+            //             console.log('nodeDataArray', nodeDataArray);
+            //             setNodes((prev) => ({
+            //                 trees: [
+            //                     ...prev.trees,
+            //                     ...nodeDataArray.data.map((nodeData: NodeTreeData) => ({
+            //                         nodeId: nodeData.id-1,
+            //                         nodeName: nodeData.name,
+            //                         coordinateX: nodeData.coordinateX,
+            //                         coordinateY: nodeData.coordinateY,
+            //                         coordinateZ: nodeData.coordinateZ
+            //                     }))
+            //                 ]
+            //             }));
+            //             console.log('nodes', nodes);
+            //         }
+            //     } catch (error) {
+            //         console.error('Error in searchNodeDatas:', error);
+            //     }
+            // }         
         }
         searchData();
-    }, [nodeDataIdx]);
+    }, [id_num]);
 
     // useEffect(() => {
     //     const readNodesData = async () => {
@@ -252,7 +260,6 @@ export default function Workspace() {
         setNextId(nextId + 1);
     }
     useEffect(() => {
-        let count = 0;
         const getNodesData = async () => {
             const response = await fetch('../../api/nodeDatas');
             const nodeData = await response.json();
