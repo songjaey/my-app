@@ -1,18 +1,53 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from '../../../../prisma/prisma';
+import { Element, Node } from "@/interfaces";
+
 
 export async function POST(req: NextRequest) {
+    const newElements = [];
     try {
         const body = await req.json();
 
-        const newElement = await prisma.elementTreeData.create({
-            data: {
-                ...body,
-                name: body.name,
-                savedNodeIds: body.savedNodeIds
-            },
+        const nodeData = await prisma.elementTreeData.createMany({
+            data: body.map((element: Element) => ({
+                name: element.name,
+                projectId: element.projectId,
+            }))
         });
-        return new NextResponse(JSON.stringify(newElement), {
+
+        console.log('NodeData', nodeData);
+        for (const element of body) {
+            await prisma.nodeTreeData.createMany({
+                data: element.nodes.map((node: Node) => ({
+                    id: node.id,
+                    name: node.name,
+                    coordinateX: node.coordinateX,
+                    coordinateY: node.coordinateY,
+                    coordinateZ: node.coordinateZ,
+                    projectId: node.projectId,
+                }))
+            });
+        }
+
+        const createdElements = await prisma.elementTreeData.findMany({
+            where: {
+                projectId: body[0].projectId,
+            }
+        });
+        
+        const createdNodes = await prisma.nodeTreeData.findMany({
+            where: {
+                projectId: body[0].projectId,
+            }
+        });
+
+        const combinedData = createdElements.map(element => ({
+            ...element,
+            nodes: createdNodes.filter(node => node.projectId === element.projectId)
+        }));
+
+
+        return new NextResponse(JSON.stringify(combinedData), {
             status: 201,
             headers: { 'Content-Type': 'application/json' },
         });

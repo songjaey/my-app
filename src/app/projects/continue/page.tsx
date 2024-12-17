@@ -9,7 +9,7 @@ export default function Continue() {
     const [projects, setProjects] = useState<Project[]>([]);
 
     const handleContinue = (projectId: string) => {
-        navigation.push(`/projects/new/workspace?id=${projectId}`);
+        navigation.push(`/projects/new/workspace2?id=${projectId}`);
     };
 
     useEffect(() => {

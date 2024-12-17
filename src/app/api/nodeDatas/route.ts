@@ -1,20 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from '../../../../prisma/prisma';
+import { Node } from "@/interfaces";
 
 export async function POST(req: NextRequest, res: NextResponse) {
-    try {
-        const body = await req.json();
+    console.log('post')
+    const body = await req.json();
+    console.log(body);
+    // [{}, {}]
 
-        const newNode = await prisma.nodeTreeData.create({
-            data: {
-                ...body,
-                name: body.name,
-                coordinateX: body.coordinateX,
-                coordinateY: body.coordinateY,
-                coordinateZ: body.coordinateZ,
-            },
+    // const test = body.map((node: Node) => ({
+    //          name: node.name,
+    //          coordinateX: node.coordinateX,
+    //          coordinateY: node.coordinateY,
+    //          coordinateZ: node.coordinateZ,
+    //          projectId: node.projectId
+    //      }))
+
+    try {
+        const newNodes = await prisma.nodeTreeData.createMany({
+            data: body.map((node: Node) => ({
+                name: node.name,
+                coordinateX: node.coordinateX,
+                coordinateY: node.coordinateY,
+                coordinateZ: node.coordinateZ,
+                projectId: node.projectId
+            }))
         });
-        return new NextResponse(JSON.stringify(newNode), {
+        return new NextResponse(JSON.stringify(newNodes), {
             status: 201,
             headers: { 'Content-Type': 'application/json' },
         });

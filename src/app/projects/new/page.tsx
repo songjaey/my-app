@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation'
 import { Project } from "@prisma/client";
-import Link from 'next/link'
 
 
 export default function Start() {
@@ -13,7 +12,7 @@ export default function Start() {
     const handleContinue = (projectIdt: number) => {
         const strProjectId = String(projectIdt);
         console.log(strProjectId);
-        navigation.push(`/projects/new/workspace?id=${strProjectId}`);
+        navigation.push(`/projects/new/workspace2?id=${strProjectId}`);
     };
 
     useEffect(() => {
@@ -32,8 +31,7 @@ export default function Start() {
         readProjectData();
     },[]);
 
-    const handleCreateProject = async ( data: Omit<Project, 'id' | 'createdAt'> ) => {
-
+    const handleCreateProject = async ( data: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'nodes' | 'elements'> ) => {
         console.log('111111111111111111111');
         const sendData = { ...data };
         const response = await (await fetch('../api/project', {
@@ -43,6 +41,8 @@ export default function Start() {
                 "Content-Type": "application/json",
             },
         })).json();
+
+        2161656561561
         console.log('222222222222222222');
         if(response.errors) {
             console.log(response.errors);
@@ -54,7 +54,6 @@ export default function Start() {
             handleContinue(projectId);
         }
     }
-
 
     return(
         <div className='flex flex-col justify-center items-center space-y-5 border border-red-500 p-10'>
@@ -81,8 +80,6 @@ export default function Start() {
                         title: inputTitle,
                         isSaved: true,
                         imageSrc: '',
-                        savedNodeIds: '',
-                        savedElementIds: '',
                     })
                 }
                 className="px-10 py-2 my-20 w-1/2 text-center bg-green-500 text-white rounded-md hover:bg-green-600 bg-opacity-50"

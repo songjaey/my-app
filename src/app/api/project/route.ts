@@ -9,9 +9,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
                 ...body,
                 title: body.title,
                 imageSrc: body.imageSrc,
-                isSaved: body.isSaved,   
-                savedNodeIds: body.savedNodeIds,
-                savedElementIds: body.savedElementIds,
+                isSaved: body.isSaved
             },
         });
         return new NextResponse(JSON.stringify(newProject), {
@@ -40,8 +38,8 @@ export async function PUT(req: NextRequest, res: NextResponse) {
             where: { id: body.id },
             data: {
                 ...body,
-                savedNodeIds: body.savedNodeIds,
-                savedElementIds: body.savedElementIds,
+                nodes: body.nodes,
+                elements: body.elements,
             },
         });
         //console.log('updatedResource : ', updatedResource);

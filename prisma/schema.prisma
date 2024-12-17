@@ -13,11 +13,12 @@ datasource db {
 model Project {
   id              Int      @id @default(autoincrement())
   createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
   title           String?
   isSaved         Boolean  @default(false)
   imageSrc        String?
-  savedNodeIds    String?
-  savedElementIds String?
+  nodes           NodeTreeData[]
+  elements        ElementTreeData[]
 }
 
 model NodeTreeData {
@@ -26,10 +27,17 @@ model NodeTreeData {
   coordinateX Int
   coordinateY Int
   coordinateZ Int
+  projectId   Int
+  project     Project @relation(fields: [projectId], references: [id])
+  elements    ElementTreeData[]
 }
 
 model ElementTreeData {
   id           Int    @id @default(autoincrement())
   name         String
-  savedNodeIds String
+  type         String?
+  properties   String?
+  projectId    Int
+  project      Project @relation(fields: [projectId], references: [id])
+  nodes        NodeTreeData[]
 }

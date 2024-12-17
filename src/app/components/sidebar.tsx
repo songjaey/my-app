@@ -1,10 +1,10 @@
-import { ElementTree, NodeTree } from "@/interfaces";
+import { Element, Node } from "@/interfaces";
 import { useEffect } from "react";
 
 interface Props {
     className: string;
-    nodes: NodeTree;
-    elements: ElementTree[];
+    nodes: Node[];
+    elements: Element[];
 }
 
 export default function Sidebar({className, nodes, elements} : Props) {
@@ -15,10 +15,10 @@ export default function Sidebar({className, nodes, elements} : Props) {
         <div className={className}>
             <div>
                 <label>Nodes List</label>
-                {nodes?.trees?.map((node) => {
+                {nodes?.map((node : Node) => {
                     return(
-                        <div key={node.nodeId} className="p-4 border rounded mb-2">
-                            <p>{node.nodeName}</p>
+                        <div key={node.id} className="p-4 border rounded mb-2">
+                            <p>{node.name}</p>
                             <p>{node.coordinateX},{node.coordinateY},{node.coordinateZ}</p>
                         </div>
                     );
@@ -28,8 +28,8 @@ export default function Sidebar({className, nodes, elements} : Props) {
                 <label>Elements List</label>
                 {elements?.map((element) => {
                     return(
-                        <div key={element.elementId} className="p-4 border rounded mb-2">
-                            <p>{element.elementName}</p>
+                        <div key={element.id} className="p-4 border rounded mb-2">
+                            <p>{element.name}</p>
                         </div>
                     );
                 })}

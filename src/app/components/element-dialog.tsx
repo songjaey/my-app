@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { NodeTree, ElementTree } from '@/interfaces'
+import { Node, ElementTree } from '@/interfaces'
 
 interface Props {
     title: string;
     isOpen: boolean;
-    nodes: NodeTree;
+    nodes: Node[];
     onClickOK: (nodesIds: number[]) => void;
     onClickCancel: () => void;
 }
@@ -30,7 +30,7 @@ function ElementDialog({title, isOpen, nodes, onClickOK, onClickCancel}: Props) 
     const handleClickSelectedDiv = (nodeId: number) => {
         setSelectedNodes(selectedNodes.filter(id => id !== nodeId))
     }
-    console.log(nodes);
+    // console.log(nodes);
 
     return (
         <div className="dialog-container absolute top-36 left-5 border border-black">
@@ -40,10 +40,10 @@ function ElementDialog({title, isOpen, nodes, onClickOK, onClickCancel}: Props) 
                 <div className="py-2 flex flex-row space-x-10">
                     <div>
                         <label>Node List</label>
-                        {nodes.trees.map((node) => {
+                        {nodes?.map((node) => {
                             return (
-                                <div key={node.nodeId} className="p-4 border rounded mb-2" onClick={() => handleClickDiv(node.nodeId)}>
-                                    <p>{node.nodeName}</p>
+                                <div key={node.id} className="p-4 border rounded mb-2" onClick={() => handleClickDiv(node.id)}>
+                                    <p>{node.name}</p>
                                     <p>{node.coordinateX},{node.coordinateY},{node.coordinateZ}</p>
                                 </div>
                           );
@@ -51,11 +51,11 @@ function ElementDialog({title, isOpen, nodes, onClickOK, onClickCancel}: Props) 
                     </div>
                     <div>
                         <label>Selected Nodes</label>
-                        {nodes.trees.map((node) => {
+                        {nodes.map((node) => {
                             return (
-                                selectedNodes.includes(node.nodeId) ? (
-                                    <div key={node.nodeId} className="p-4 border rounded mb-2" onClick={() => handleClickSelectedDiv(node.nodeId)}>
-                                        <p>{node.nodeName}</p>
+                                selectedNodes.includes(node.id) ? (
+                                    <div key={node.id} className="p-4 border rounded mb-2" onClick={() => handleClickSelectedDiv(node.id)}>
+                                        <p>{node.name}</p>
                                         <p>{node.coordinateX},{node.coordinateY},{node.coordinateZ}</p>
                                     </div>
                                 ): null
