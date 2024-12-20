@@ -17,27 +17,26 @@ model Project {
   title           String?
   isSaved         Boolean  @default(false)
   imageSrc        String?
-  nodes           NodeTreeData[]
-  elements        ElementTreeData[]
+  nodes           Node[]    
+  elements        Element[]
 }
 
-model NodeTreeData {
-  id          Int    @id @default(autoincrement())
+model Node {
+  id        Int       @id @default(autoincrement())
+  name      String
+  x         Int
+  y         Int
+  z         Int
+  projectId Int
+  project   Project   @relation(fields: [projectId], references: [id])
+  elements  Element[] 
+}
+
+model Element {
+  id          Int      @id @default(autoincrement())
   name        String
-  coordinateX Int
-  coordinateY Int
-  coordinateZ Int
+  type        String?   
   projectId   Int
-  project     Project @relation(fields: [projectId], references: [id])
-  elements    ElementTreeData[]
-}
-
-model ElementTreeData {
-  id           Int    @id @default(autoincrement())
-  name         String
-  type         String?
-  properties   String?
-  projectId    Int
-  project      Project @relation(fields: [projectId], references: [id])
-  nodes        NodeTreeData[]
+  project     Project  @relation(fields: [projectId], references: [id])
+  nodes       Node[]   
 }

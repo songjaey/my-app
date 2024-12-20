@@ -8,14 +8,6 @@ export interface NodeTree {
     }[];
 }
 
-export interface NodeTreeType {
-    id: number;
-    name: string;
-    coordinateX: number;
-    coordinateY: number;
-    coordinateZ: number;
-}
-
 export interface Node {
     id: number;
     name: string;
@@ -29,11 +21,10 @@ export interface Element {
     id: number;
     name: string;
     projectId: number;
-    nodes: Node[];
+    nodeIds: number[];
 }
 
-export interface ElementTree {
-    elementId: number;
-    elementName: string;
-    elementNodeId: number[];
+export interface Result {
+    nodeCount: number;
+    elementCount: number;
 }

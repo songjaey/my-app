@@ -2,11 +2,11 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useSearchParams } from 'next/navigation';
-import { NodeTreeData } from '@prisma/client';
 import NodeDialog from '@/app/components/node-dialog';
 import ElementDialog from '@/app/components/element-dialog';
+import ResultModal from '@/app/components/result';
 import Sidebar from '@/app/components/sidebar';
-import { Element, Node } from '@/interfaces';
+import { Element, Node, Result } from '@/interfaces';
 import { Project } from '@prisma/client';
 
 export default function Workspace(){
@@ -14,7 +14,6 @@ export default function Workspace(){
     const searchParams = useSearchParams();
     const id = searchParams.get('id');
     const id_num = Number(id);
-    console.log('id_num :',id_num);
 
     const [isInitialized, setIsInitialized] = useState(false);
     const sceneRef = useRef<THREE.Scene | null>(null);
@@ -25,8 +24,12 @@ export default function Workspace(){
 
     const [nodeModalIsOpen, setNodeModalIsOpen] = useState(false);
     const [elementModalIsOpen, setElementModalIsOpen] = useState(false);
+    const [resultModalIsOpen, setResultModalIsOpen] = useState(false);
+    const [isExcuting, setIsExcuting] = useState(false);
+    const [isCompleted, setIsCompleted] = useState(false);
     const [nodes, setNodes] = useState<Node[]>([]);
     const [elements, setElements] = useState<Element[]>([]);
+    const [result, setResult] = useState<Result | null>(null);
 
     useEffect(() => {
         if(!mountRef.current) return;
@@ -69,82 +72,61 @@ export default function Workspace(){
         const searchData = async () => {
             const id_temp = String(id_num);
             const res = await fetch(`../../api/getProjectNodeIds?id=${id_temp}`);
-            const nodeDataArray = await res.json();
-            if (nodeDataArray.data && Array.isArray(nodeDataArray.data)) {
-                console.log('nodeDataArray', nodeDataArray);
-                const mappedNodes = nodeDataArray.map((nodeData: NodeTreeData) => ({
+            const dataArray = await res.json();
+            if (dataArray.data.nodes && Array.isArray(dataArray.data.nodes)) {
+                console.log('nodeDataArray', dataArray.data.nodes[0]);
+                const mappedNodes = dataArray.data.nodes.map((nodeData: any) => ({
                     id: nodeData.id - 1,
                     name: nodeData.name,
-                    coordinateX: nodeData.coordinateX,
-                    coordinateY: nodeData.coordinateY,
-                    coordinateZ: nodeData.coordinateZ,
+                    x: nodeData.x,
+                    y: nodeData.y,
+                    z: nodeData.z,
                 }));
-                setNodes((prev) => ({
+
+                setNodes((prev) => [
                     ...prev,
-                    ...mappedNodes.data.map((node: NodeTreeData) => ({
-                        id: nodes.length,
+                    ...mappedNodes.map((node: any) => ({
+                        id: node.id,
                         name: node.name,
-                        coordinateX: node.coordinateX,
-                        coordinateY: node.coordinateY,
-                        coordinateZ: node.coordinateZ,
+                        coordinateX: node.x,
+                        coordinateY: node.y,
+                        coordinateZ: node.z,
                         projectId: id_num
                     }))
+                ]); 
+            }
+            if (dataArray.data.elements && Array.isArray(dataArray.data.elements)) {
+                console.log('elementDataArray', dataArray.data.elements[0]);
+                const mappedElements = dataArray.data.elements.map((elementData: any) => ({
+                    id: elementData.id - 1,
+                    name: elementData.name,
                 }));
-                console.log('nodes', nodes);
+                setElements((prev) => [
+                    ...prev,
+                    ...mappedElements.map((node: any) => ({
+                        id: node.id,
+                        name: node.name,
+                        projectId: id_num,
+                    }))
+                ]); 
             }
         }
         searchData();
     }, []);
 
-    const handleCreateNodes = async (nodesData: Node[]) => {
-        const sendData = nodesData.map((node: Node) => ({
-            name: node.name,
-            coordinateX: node.coordinateX,
-            coordinateY: node.coordinateY,
-            coordinateZ: node.coordinateZ,
-            projectId: id_num
-        }));
-        console.log('sendData', sendData);
-        // const response = await fetch('../../api/nodeDatas', {
-        //     method: "POST",
-        //     body: JSON.stringify(sendData),
-        //     headers: {
-        //         "Content-Type": "application/json",
-        //     },
-        // });
-
-        try{
-            const response = await fetch('/api/nodeDatas', {
-                method: "POST",
-                body: JSON.stringify(sendData),
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
-            console.log(response);
-        } catch(error) {
-            console.log('error', error);
-        }
-        // if(response.errors) {
-        //     console.log(response.errors);
-        //     return;
-        // }
-    }
-
-    const handleNodeOK = (X: number, Y: number, Z: number) => {
+    const handleNodeOK = async ( X: number, Y: number, Z: number ) => {
         setNodes(prev => {
+            const maxId = Math.max(...prev.map(node => node.id), -1);
             const newNodes = [...prev, {
-                id: prev.length,
-                name: 'node' + String(prev.length),
+                id: maxId + 1,
+                name: 'node' + String(prev.length + 1),
                 coordinateX: X,
                 coordinateY: Y,
                 coordinateZ: Z,
                 projectId: id_num
             }];
-            //handleCreateNodes(newNodes);
             return newNodes;
         });
-        //handleCreateNodes(nodes);
     };
 
     const handleNodeCancel = () => {
@@ -155,35 +137,29 @@ export default function Workspace(){
         setElementModalIsOpen(false);
     }
 
+    const handleResultCancel = () => {
+        setResultModalIsOpen(false);
+        setIsCompleted(false);
+    }
+
     function calculateSelectedPoints (nodeIds: number[]) {
         const selectedPoints: number[] = [];
         console.log('nodeIds', nodeIds);
+        console.log('nodes', nodes);
         for(let i = 0; i < nodeIds.length; i++) {
-            //selectedPoints[i] = allNodes.trees[nodeIds[i]-1].nodeId + 1;
-            selectedPoints[i] = nodes[nodeIds[i]].id;
+            const idx = nodes.findIndex((node: Node) => node.id === nodeIds[i]);
+            selectedPoints[i] = idx;
         }
         console.log('selectedPoints', selectedPoints);
         return selectedPoints;
     };
     
-    async function updateNodes(selectedPointsTemp: number[]) {
-        return new Promise<number[]>((resolve) => {
-            setSelectedNodes(prev => {
-                const newState = [...prev, ...selectedPointsTemp];
-                resolve(newState); 
-                return newState;
-            });
-        });
-    }
-
     function processSelectedPoints(SelectedNodes: number[]) {
         const points: THREE.Vector3[] = [];
         console.log('updatedSelectedNodes',SelectedNodes);
         SelectedNodes.forEach((pointIndex) => {
             console.log('processing index:', pointIndex - 1); 
-            //console.log('trees length:', allNodes.trees.length); 
             const node = nodes[pointIndex];
-            //console.log('node data',node);
             points.push(new THREE.Vector3(node.coordinateX, node.coordinateY, node.coordinateZ));
         });
         points.push(points[0]);
@@ -209,22 +185,9 @@ export default function Workspace(){
             id: elements.length,
             name: 'element' + String(elements.length),
             projectId: id_num,
-            nodes: selectedNodes.map(nodeIndex => nodes[nodeIndex]),
+            nodeIds: selectedNodes
         }]);
-        // setNodes(prevNodes => 
-        //     prevNodes.map(node => 
-        //         selectedNodes.includes(node.id)?
-        //                 {...node, elementId: elementId} : node
-        //     )
-        // );
     }
-
-    function updateProjectData(nodeIds: number[]) {
-        // handleUpdateProject({
-        //     id: Number(id_num),
-        //     nodes: 
-        // });
-    };
 
     const handleUpdateProject = async ( data: Omit<Project, 'title' | 'isSaved' | 'imageSrc'> ) => {
         console.log('data : ', data);
@@ -240,43 +203,36 @@ export default function Workspace(){
     }
 
     const handleElementOK = async (nodeIds: number[]) => {
-        //console.log(nodeIds);
         if (!isInitialized) {
             console.error('Scene, Renderer, or Camera is not initialized yet!');
             return;
         }
-        //const iter = nodeIds.length;
         let points: THREE.Vector3[] = [];
+        console.log('nodeIds--------------- ',nodeIds);
         const selectedPoints = calculateSelectedPoints(nodeIds);
         console.log('selectedPoints', selectedPoints);
-        // const updatedNodes = await updateNodes(selectedPointsTemp);
-        // console.log('selectedNodes', updatedNodes);
         points = processSelectedPoints(selectedPoints);
         console.log('points', points);
-        // //processAndDrawPoints(nodeIds);
 
         drawPoints(points);
         // //pushElement(nodeIds);
         saveElementData(nodeIds);
-
-        //updateProjectData(nodeIds);  // DB에 변수 데이터 저장
-
-        // // const nodeIdsData = processNodeIds(nodeIds, iter);
-        // createNewElement();
-        // updateElementIds();
     };
 
     async function saveNodes () {
+
         const sendData = nodes.map((node: Node) => ({
+            //id: node.id,
             name: node.name,
-            coordinateX: node.coordinateX,
-            coordinateY: node.coordinateY,
-            coordinateZ: node.coordinateZ,
+            x: node.coordinateX,
+            y: node.coordinateY,
+            z: node.coordinateZ,
             projectId: id_num,
         }));
+
         try{
-            const response = await fetch('../../api/nodeDatas', {
-                method: "POST",
+            const response = await fetch('/api/nodes', {
+                method: "PUT",
                 body: JSON.stringify(sendData),
                 headers: {
                     "Content-Type": "application/json",
@@ -296,11 +252,12 @@ export default function Workspace(){
         const sendData = elements.map((element: Element) => ({
             name: element.name,
             projectId: id_num,
-            nodes: element.nodes
+            nodeIds: element.nodeIds.map((id: number): number => id + nodes.length + 1)
         }));
 
+        console.log('sendData', sendData);
         try{
-            const response = await fetch('../../api/elementsData', {
+            const response = await fetch('/api/elements', {
                 method: "POST",
                 body: JSON.stringify(sendData),
                 headers: {
@@ -308,26 +265,60 @@ export default function Workspace(){
                 },
             });
 
+            console.log(response);
+            const json = await response.json();
+            console.log('json ', json);
             if(!response.ok){
                 throw new Error(`HTTP error!`);
             }
-
         }catch(error){
             console.log(error);
         }
     }
 
     const saveData = async () => {
-        console.log(elements);
+        console.log('nodes : ', nodes);
         await saveNodes();
         await saveElements();
     }
 
+    const handleExcute = async () => {
+        try{
+            setIsExcuting(true);
+            setIsCompleted(false);
+            const response = await fetch('/api/excute', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    nodeCount: nodes.length,
+                    elementCount: elements.length
+                })
+            });
+            const data = await response.json();
+            setResult(data);
+            setIsCompleted(true); 
+        } catch(error){
+            console.error('Error', error);
+        } finally {
+            setIsExcuting(false);
+        }
+    };
+
+    const handleNodeUpdate = (nodeId: number, value: number[]) => {
+        setNodes(prev =>
+            prev.map(node => 
+                node.id == nodeId ? {...node, coordinateX: value[0], coordinateY: value[1], coordinateZ: value[2]} : node
+            )
+        );
+    };
+
     return (
         <div className='w-full h-scree relative flex'>
-            <div className='fixed top-20 left-4 space-x-2'>
+            <div className='fixed top-40 left-4 space-x-2'>
                 <button 
-                  className='px-4 py-2 bg-blue-500 text-white-rounded'
+                  className='px-4 py-2 bg-blue-500  text-white rounded'
                   onClick={() => setNodeModalIsOpen(true)}
                 >
                   Create Nodes
@@ -344,12 +335,15 @@ export default function Workspace(){
                 >
                   Save
                 </button>
-                {/* <button 
-                  className='px-4 py-2 bg-red-300 text-white rounded'
-                  onClick={() => setElementModalIsOpen(true)}
+                <button 
+                  className='px-4 py-2 bg-black text-white rounded'
+                  onClick={async () => {
+                    handleExcute();
+                    setResultModalIsOpen(true);
+                  }}
                 >
-                  Save
-                </button> */}
+                  Excute
+                </button>  
             </div>
             <div ref={mountRef} className='w-5/6 h-scree'>
                 {/* THREE.JS Rendering code*/}
@@ -359,6 +353,7 @@ export default function Workspace(){
                     className='bg-gray-100 p-4'
                     nodes={nodes}
                     elements={elements}
+                    onNodeUpdate={handleNodeUpdate}
                 />
             </div>            
             <NodeDialog
@@ -373,6 +368,13 @@ export default function Workspace(){
               nodes={nodes}
               onClickOK={(nodesIds)=>handleElementOK(nodesIds)}
               onClickCancel={handleElementCancel}
+            />
+            <ResultModal
+                isOpen={resultModalIsOpen}
+                isExecuting={isExcuting}
+                isCompleted={isCompleted}
+                result={result}
+                onClickCancel={handleResultCancel}
             />
         </div>
     );

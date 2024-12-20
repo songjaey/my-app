@@ -1,53 +1,60 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from '../../../../prisma/prisma';
 import { Element, Node } from "@/interfaces";
+import { element } from "three/webgpu";
 
 
-export async function POST(req: NextRequest) {
-    const newElements = [];
+export async function POST(req: NextRequest, res: NextResponse) {
     try {
         const body = await req.json();
-
-        const nodeData = await prisma.elementTreeData.createMany({
+        console.log('body', body);
+        const newElement = await prisma.elementTreeData.createMany({
             data: body.map((element: Element) => ({
                 name: element.name,
                 projectId: element.projectId,
+                nodes: 
+                // nodeIds: {
+                //     set: element.nodeIds
+                // }
             }))
         });
 
-        console.log('NodeData', nodeData);
-        for (const element of body) {
-            await prisma.nodeTreeData.createMany({
-                data: element.nodes.map((node: Node) => ({
-                    id: node.id,
-                    name: node.name,
-                    coordinateX: node.coordinateX,
-                    coordinateY: node.coordinateY,
-                    coordinateZ: node.coordinateZ,
-                    projectId: node.projectId,
-                }))
-            });
-        }
-
-        const createdElements = await prisma.elementTreeData.findMany({
-            where: {
-                projectId: body[0].projectId,
-            }
-        });
+        // for (const element of body) {
+        //     await prisma.nodeTreeData.createMany({
+        //         data: element.nodes.map((node: Node) => ({
+        //             id: node.id,
+        //             name: node.name,
+        //             coordinateX: node.coordinateX,
+        //             coordinateY: node.coordinateY,
+        //             coordinateZ: node.coordinateZ,
+        //             projectId: node.projectId,
+        //         }))
+        //     });
+        // }
         
-        const createdNodes = await prisma.nodeTreeData.findMany({
-            where: {
-                projectId: body[0].projectId,
-            }
-        });
+        /////////////////////////
+        console.log('newElement: ', newElement);
 
-        const combinedData = createdElements.map(element => ({
-            ...element,
-            nodes: createdNodes.filter(node => node.projectId === element.projectId)
-        }));
+        ///////////////////////
+        // const createdElements = await prisma.elementTreeData.findMany({
+        //     where: {
+        //         projectId: body[0].projectId,
+        //     }
+        // });
+        
+        // const createdNodes = await prisma.nodeTreeData.findMany({
+        //     where: {
+        //         projectId: body[0].projectId,
+        //     }
+        // });
 
+        // const combinedData = createdElements.map(element => ({
+        //     ...element,
+        //     nodes: createdNodes.filter(node => node.projectId === element.projectId)
+        // }));
 
-        return new NextResponse(JSON.stringify(combinedData), {
+        console.log(newElement);
+        return new NextResponse(JSON.stringify(newElement), {
             status: 201,
             headers: { 'Content-Type': 'application/json' },
         });

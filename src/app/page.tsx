@@ -4,7 +4,7 @@ export default function Home() {
   return (
     <div className="h-1/10 rounded bg-slate-50 flex flex-col">
       <div className="py-10 px-10">
-        Start Project 1
+        Start Project
       </div>
       <div className="space-x-4">
         <Link

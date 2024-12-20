@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from '../../../../prisma/prisma';
 import { Node } from "@/interfaces";
 
+
 export async function POST(req: NextRequest, res: NextResponse) {
     console.log('post')
     const body = await req.json();
@@ -23,9 +24,10 @@ export async function POST(req: NextRequest, res: NextResponse) {
                 coordinateX: node.coordinateX,
                 coordinateY: node.coordinateY,
                 coordinateZ: node.coordinateZ,
-                projectId: node.projectId
+                projectId: node.projectId,
             }))
         });
+        console.log('newNodes',newNodes);
         return new NextResponse(JSON.stringify(newNodes), {
             status: 201,
             headers: { 'Content-Type': 'application/json' },
